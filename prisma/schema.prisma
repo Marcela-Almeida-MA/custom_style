@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Categoria {
+  CAMISETA
+  CAIXA
+  SACOLA
+  ETIQUETA
+}
+
+enum FormatoLogo {
+  PNG
+  JPG
+  SVG
+}
+
+enum StatusPedido {
+  RASCUNHO
+  CONFIRMADO
+}
+
+model Product {
+  id                  String            @id @default(uuid())
+  nome                String
+  categoria           Categoria
+  precoBase           Decimal           @map("preco_base") @db.Decimal(10, 2)
+  modelo3dRef         String            @map("modelo_3d_ref")
+  permiteLogoProprio  Boolean           @default(true) @map("permite_logo_proprio")
+  criadoEm            DateTime          @default(now()) @map("criado_em")
+
+  cores               ProductColor[]
+  estampas            ProductStamp[]
+  orderItems          OrderItem[]
+
+  @@index([categoria])
+  @@map("products")
+}
+
+model Color {
+  id       String         @id @default(uuid())
+  nome     String
+  hex      String
+  produtos ProductColor[]
+  orderItems OrderItem[]
+
+  @@map("colors")
+}
+
+model ProductStamp {
+  productId String  @map("product_id")
+  stampId   String  @map("stamp_id")
+  product   Product @relation(fields: [productId], references: [id])
+  stamp     Stamp   @relation(fields: [stampId], references: [id])
+
+  @@id([productId, stampId])
+  @@index([productId])
+  @@map("product_stamps")
+}
+
+model ProductColor {
+  productId String  @map("product_id")
+  colorId   String  @map("color_id")
+  product   Product @relation(fields: [productId], references: [id])
+  color     Color   @relation(fields: [colorId], references: [id])
+
+  @@id([productId, colorId])
+  @@index([productId])
+  @@map("product_colors")
+}
+
+model Stamp {
+  id         String         @id @default(uuid())
+  nome       String
+  imagemUrl  String         @map("imagem_url")
+  produtos   ProductStamp[]
+  orderItems OrderItem[]
+
+  @@map("stamps")
+}
+
+model LogoUpload {
+  id            String      @id @default(uuid())
+  arquivoUrl    String      @map("arquivo_url")
+  formato       FormatoLogo
+  tamanhoBytes  Int         @map("tamanho_bytes")
+  criadoEm      DateTime    @default(now()) @map("criado_em")
+
+  orderItems    OrderItem[]
+
+  @@map("logo_uploads")
+}
+
+model Order {
+  id              String       @id @default(uuid())
+  status          StatusPedido @default(RASCUNHO)
+  valorProdutos   Decimal      @map("valor_produtos") @db.Decimal(10, 2)
+  valorFrete      Decimal      @map("valor_frete") @db.Decimal(10, 2)
+  valorTotal      Decimal      @map("valor_total") @db.Decimal(10, 2)
+  cepDestino      String       @map("cep_destino")
+  nomeContato     String       @map("nome_contato")
+  emailContato    String       @map("email_contato")
+  telefoneContato String       @map("telefone_contato")
+  criadoEm        DateTime     @default(now()) @map("criado_em")
+
+  itens           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String       @id @default(uuid())
+  orderId        String       @map("order_id")
+  productId      String       @map("product_id")
+  colorId        String?      @map("color_id")
+  stampId        String?      @map("stamp_id")
+  logoUploadId   String?      @map("logo_upload_id")
+  quantidade     Int
+  precoUnitario  Decimal      @map("preco_unitario") @db.Decimal(10, 2)
+
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id])
+  color          Color?       @relation(fields: [colorId], references: [id])
+  stamp          Stamp?       @relation(fields: [stampId], references: [id])
+  logoUpload     LogoUpload?  @relation(fields: [logoUploadId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}

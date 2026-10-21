@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #F6F4F0;
+  --color-canvas: #EDEAE3;
+  --color-ink: #262420;
+  --color-stone: #8F887C;
+  --color-stone-light: #D8D3C9;
+  --color-thread: #35415C;
+  --color-thread-light: #5B6B8C;
+  --font-sans: "Work Sans", system-ui, sans-serif;
+  --radius-sm: 2px;
+  --radius: 4px;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-thread);
+    outline-offset: 2px;
+  }
+}
